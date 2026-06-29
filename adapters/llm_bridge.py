@@ -4,7 +4,6 @@ import numpy as np
 import torch
 from transformers import AutoTokenizer, AutoModel
 
-# Automatically find the project root directory relative to this file's location
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if ROOT_DIR not in sys.path:
     sys.path.insert(0, ROOT_DIR)
@@ -24,9 +23,13 @@ class LLMTelemetryBridge:
         inputs = self.tokenizer(text_stream, return_tensors="pt")
         with torch.no_grad():
             outputs = self.model(**inputs, output_hidden_states=True)
+        
         hidden_states = outputs.hidden_states[self.target_layer]
-        mean_embedding = torch.mean(hidden_states, dim=1).squeeze()
-        return mean_embedding.cpu().numpy().reshape(-1, 1)
+        
+        # Extract exclusively the final causal token state payload vector
+        final_token_tensor = hidden_states[0, -1, :]
+        
+        return final_token_tensor.cpu().numpy().reshape(-1, 1)
 
 if __name__ == "__main__":
     print("Testing LLM Bridge Architecture...")
