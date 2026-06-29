@@ -2,7 +2,7 @@ import os
 import sys
 import numpy as np
 import torch
-from transformers import AutoTokenizer, AutoModel
+from transformers import AutoTokenizer, AutoModelForCausalLM
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if ROOT_DIR not in sys.path:
@@ -12,9 +12,10 @@ from core.engine import ContinuousBeliefStateEngine
 
 class LLMTelemetryBridge:
     def __init__(self, model_name: str = "gpt2", target_layer: int = -1):
-        print(f"Loading tokenizer and model weight structures for '{model_name}'...")
+        print(f"Loading tokenizer and causal model weight structures for '{model_name}'...")
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModel.from_pretrained(model_name)
+        # Load as a Causal Language Model so it contains the .generate() interface loop
+        self.model = AutoModelForCausalLM.from_pretrained(model_name)
         self.target_layer = target_layer
         self.embedding_dim = self.model.config.hidden_size
         print(f"Bridge initialized. Detected latent space dimension: {self.embedding_dim}")
